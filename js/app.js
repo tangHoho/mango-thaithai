@@ -76,6 +76,8 @@ function speak(text, slow) {
   speechSynthesis.speak(u);
 }
 const sayOf = it => it.say || it.t;
+/* tapping a consonant option: just the letter sound (กอ), not the name word */
+const letterSay = it => it.type === "cons" ? (it.t === "อ" ? "ออ" : it.t + "อ") : sayOf(it);
 
 /* ---------------- question builders ---------------- */
 function typePool(lesson, type) {
@@ -118,9 +120,9 @@ const MAKERS = {
   sound: (l, it) => itemChoice(l, it, { h: "這個子音念什麼音？", show: { big: it.t }, key: x => x.snd,
     fmt: x => ({ m: x.snd }), reveal: `${it.t} 念 ${it.snd}，代表字 ${it.w}（${it.zh}）` }),
   listen: (l, it) => itemChoice(l, it, { h: "聽聽看，是哪一個？", say: sayOf(it), key: x => x.t, ok: notSameSound(it),
-    fmt: thaiOpt, optSay: sayOf, reveal: `${it.t}（${it.rom}）${it.zh && it.type !== "cons" ? "＝" + it.zh : ""}`, after: null }),
+    fmt: thaiOpt, optSay: letterSay, reveal: `${it.t}（${it.rom}）${it.zh && it.type !== "cons" ? "＝" + it.zh : ""}`, after: null }),
   name: (l, it) => itemChoice(l, it, { h: `哪個子音的代表字是「${it.w}」？`, show: { mid: it.w, rom: it.zh }, say: it.w, key: x => x.t,
-    fmt: x => ({ t: x.t }), optSay: sayOf, reveal: `${it.t} ${it.w}（${it.rom}）` }),
+    fmt: x => ({ t: x.t }), optSay: letterSay, reveal: `${it.t} ${it.w}（${it.rom}）` }),
   cls: (l, it) => fixedChoice(it, ["中子音", "高子音", "低子音"], CLS_NAME[it.cls], { h: "這是哪一類子音？", show: { big: it.t },
     reveal: `${it.t} 是${CLS_NAME[it.cls]}（${it.w}，${it.zh}）` }),
   vsound: (l, it) => itemChoice(l, it, { h: "這個母音念什麼？", show: { big: it.t }, key: x => x.snd,
