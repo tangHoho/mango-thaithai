@@ -1,7 +1,7 @@
 /* 芒果泰泰 — game engine (ES module). Course data comes from data.js (classic script). */
 import * as Sync from "./sync.js";
 
-const APP_VERSION = "1.0.0";
+const APP_VERSION = self.APP_VERSION || "dev";
 
 /* ---------------- helpers ---------------- */
 const $ = s => document.querySelector(s);
@@ -204,7 +204,7 @@ function render() {
   if (L) return; // lesson screens render themselves
   app.classList.add("withtabs");
   if (Sync.configured && !S.welcomed && !user) return welcome();
-  const head = `<header class="top"><div class="brand"><img src="icons/icon-192.png" alt="" width="30" height="30">芒果泰泰</div>
+  const head = `<header class="top"><div class="brand"><img src="icons/icon-192.png" alt="" width="30" height="30">芒果泰泰<span class="vpill">v${APP_VERSION}</span></div>
     <div class="stats"><span class="stat" title="連續天數"><span class="ic">▲</span>${liveStreak()}</span>
     <span class="stat" title="經驗值"><span class="ic">◆</span>${S.xp}</span>
     ${Sync.configured ? `<span id="syncdot" class="syncdot" data-s="${user ? syncState : "local"}" title="${user ? "已登入同步" : "未登入"}"></span>` : ""}</div></header>`;
@@ -227,7 +227,7 @@ function welcome() {
     <p class="small">登入後學習紀錄會同步到雲端，換手機也不會不見。</p>
     <button class="ghost" type="button" data-act="guest">先不登入，直接開始</button>
     <p class="small">不登入時，紀錄只存在這台裝置。之後隨時可以到「我的」登入。</p>
-    <p class="err" id="loginErr" hidden></p></div>`;
+    <p class="err" id="loginErr" hidden></p><p class="ver">v${APP_VERSION}</p></div>`;
 }
 
 function pathView() {
@@ -311,7 +311,7 @@ function meView() {
       ? `<b>確定要清除所有進度嗎？</b><p class="small">${user ? "雲端上的紀錄也會一起清除。" : "這個動作無法復原。"}</p>
          <div class="row gap"><button type="button" class="danger" data-act="doreset">清除</button><button type="button" class="ghost" data-act="cancelreset">取消</button></div>`
       : `<button type="button" class="ghost left dangertext" data-act="reset">重設學習進度</button>`}</div>
-    <p class="ver">芒果泰泰 v${APP_VERSION}</p>`;
+    <p class="ver">芒果泰泰 v${APP_VERSION}<br><button type="button" class="linkbtn" data-act="checkupdate">檢查更新</button><span id="updmsg"></span></p>`;
 }
 
 /* ---------------- lesson flow ---------------- */
@@ -497,6 +497,7 @@ app.addEventListener("click", e => {
     case "guest": S.welcomed = true; save(); render(); break;
     case "login": doLogin(); break;
     case "logout": Sync.logout(); break;
+    case "checkupdate": checkUpdate(); break;
     case "testvoice": speak("สวัสดีค่ะ"); break;
     case "unlock": S.unlockAll = !S.unlockAll; save(); render(); break;
     case "reset": UI.confirmReset = true; render(); break;
@@ -514,6 +515,29 @@ app.addEventListener("click", e => {
 /* ---------------- boot ---------------- */
 render();
 Sync.init(onUser).catch(e => console.warn("Firebase 初始化失敗", e));
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+if ("serviceWorker" in navigator) {
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || $("#updbar")) return;
+    const bar = document.createElement("button");
+    bar.id = "updbar"; bar.type = "button"; bar.className = "updbar";
+    bar.textContent = "有新版本，點這裡更新";
+    bar.onclick = () => location.reload();
+    document.body.append(bar);
+  });
+}
+async function checkUpdate() {
+  const msg = $("#updmsg"); if (msg) msg.textContent = "　檢查中…";
+  try {
+    const reg = await navigator.serviceWorker?.getRegistration();
+    if (reg) await reg.update();
+    const res = await fetch("js/version.js?t=" + Date.now(), { cache: "no-store" });
+    const m = (await res.text()).match(/APP_VERSION\s*=\s*"([^"]+)"/);
+    const latest = m ? m[1] : APP_VERSION;
+    if (msg) msg.textContent = latest === APP_VERSION ? "　已是最新版" : `　找到 v${latest}，重新整理中…`;
+    if (latest !== APP_VERSION) setTimeout(() => location.reload(), 800);
+  } catch (e) { if (msg) msg.textContent = "　目前離線，無法檢查"; }
+}
 /* test hook: index of the correct option on the current question */
 window.__mangoAnswer = () => (L && L.qs[L.pos] ? L.qs[L.pos].ans : null);

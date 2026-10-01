@@ -29,6 +29,7 @@ manifest.json         PWA 設定（名稱、圖示、全螢幕）
 sw.js                 離線快取
 css/style.css         樣式
 js/data.js            全部課程內容（要加課程改這裡）
+js/version.js         版本號（每次更新改這裡）
 js/app.js             遊戲邏輯
 js/sync.js            Firebase 登入與同步
 js/firebase-config.js Firebase 設定（自行填入）
@@ -60,7 +61,19 @@ firestore.rules       Firestore 安全規則
 
 ## 更新版本
 
-改完檔案重新上傳時，把 `sw.js` 第一行的 `VERSION` 改一個新號碼（例如 `mango-thaithai-1.0.1`），手機才會抓到新版。`js/app.js` 裡的 `APP_VERSION` 會顯示在「我的」頁面最下方。
+版本號只放在一個地方：`js/version.js`。
+
+```js
+self.APP_VERSION = "1.0.1";
+```
+
+改完任何檔案要重新上傳時，把這個號碼往上加（例如 `1.0.2`），一起上傳。
+
+- 版本號會顯示在畫面左上角 App 名稱旁邊、歡迎畫面和「我的」頁面最下方
+- 離線快取（`sw.js`）也讀同一個號碼，號碼一變，手機下次開啟就會下載新版，並跳出「有新版本，點這裡更新」
+- 「我的」頁面最下方有「檢查更新」，可以手動確認是不是最新版
+
+建議的編號方式：修小錯字或 bug 加最後一位（1.0.1 → 1.0.2），新增課程或功能加中間那位（1.0.2 → 1.1.0）。
 
 ## 發音
 

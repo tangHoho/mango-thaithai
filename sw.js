@@ -1,8 +1,9 @@
-/* 芒果泰泰 service worker — offline cache. Bump VERSION whenever you upload new files. */
-const VERSION = "mango-thaithai-1.0.0";
+/* 芒果泰泰 service worker — offline cache. 版本號在 js/version.js，這裡不用改。 */
+importScripts("js/version.js");
+const VERSION = "mango-thaithai-" + self.APP_VERSION;
 const SHELL = [
   "./", "index.html", "manifest.json", "css/style.css",
-  "js/data.js", "js/app.js", "js/sync.js", "js/firebase-config.js",
+  "js/version.js", "js/data.js", "js/app.js", "js/sync.js", "js/firebase-config.js",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/favicon-32.png"
 ];
 
@@ -22,6 +23,7 @@ self.addEventListener("fetch", e => {
   const sameOrigin = url.origin === location.origin;
   const isFont = url.host === "fonts.googleapis.com" || url.host === "fonts.gstatic.com";
   if (!sameOrigin && !isFont) return; // Firebase / Google sign-in go straight to the network
+  if (sameOrigin && url.search) return;   // e.g. version check: always live, never cached
 
   // network first for app files (so updates show up), cache fallback when offline
   if (sameOrigin) {
